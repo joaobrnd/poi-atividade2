@@ -1,0 +1,2 @@
+"""CPU-bound recommendation service."""
+
