@@ -15,11 +15,12 @@ from time import perf_counter
 from typing import Any, Literal
 
 import numpy as np
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, HTTPException, Query
 
 
 DEFAULT_DATASET_MB = int(os.getenv("MEMORY_DEFAULT_MB", "64"))
-MAX_DATASET_MB = int(os.getenv("MEMORY_MAX_MB", "512"))
+# High enough for a working set to exceed the RAM of the smaller VM scenarios.
+MAX_DATASET_MB = int(os.getenv("MEMORY_MAX_MB", "2048"))
 MIN_DATASET_MB = 8
 
 
@@ -118,7 +119,13 @@ def scan_cache(
     mode: Literal["read", "read_write"] = Query(default="read"),
     seed: int = Query(default=42, ge=0, le=2**31 - 1),
 ) -> dict[str, Any]:
-    data, cache_hit, load_ms = manager.load(dataset_mb, seed)
+    try:
+        data, cache_hit, load_ms = manager.load(dataset_mb, seed)
+    except MemoryError:
+        raise HTTPException(
+            status_code=503,
+            detail="not enough memory to allocate the requested dataset",
+        ) from None
 
     started = perf_counter()
     checksum = 0

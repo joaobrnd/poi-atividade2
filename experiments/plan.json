@@ -1,0 +1,16 @@
+{
+  "service": "memory",
+  "base_url": "http://127.0.0.1:8002",
+  "demands": [64, 256, 512, 1024],
+  "concurrency": 4,
+  "duration_s": 20,
+  "warmup": 2,
+  "passes": 2,
+  "timeout_s": 300,
+  "scenarios": [
+    {"name": "1vcpu-1gb", "vcpus": 1, "ram_gb": 1},
+    {"name": "1vcpu-2gb", "vcpus": 1, "ram_gb": 2},
+    {"name": "2vcpu-2gb", "vcpus": 2, "ram_gb": 2},
+    {"name": "2vcpu-4gb", "vcpus": 2, "ram_gb": 4}
+  ]
+}
