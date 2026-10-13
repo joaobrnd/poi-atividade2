@@ -113,6 +113,83 @@ pytest -q
 Os testes são smoke tests: validam o contrato básico dos três endpoints sem
 executar cargas grandes.
 
+## Experimento de provisionamento
+
+O serviço previsto para a VM é o de memória. A demanda é o tamanho do conjunto
+de trabalho; o provisionamento (vCPU e RAM) é o que a VirtualBox estiver
+oferecendo no momento da coleta. O repositório não altera a VM. Os quatro
+cenários abaixo são rótulos para repetir a mesma demanda em máquinas diferentes:
+
+| Cenário | vCPU | RAM |
+| --- | --- | --- |
+| `1vcpu-1gb` | 1 | 1 GiB |
+| `1vcpu-2gb` | 1 | 2 GiB |
+| `2vcpu-2gb` | 2 | 2 GiB |
+| `2vcpu-4gb` | 2 | 4 GiB |
+
+Em cada cenário as demandas são 64, 256, 512 e 1024 MiB, com 4 requisições
+simultâneas durante 20 segundos. Dois pedidos de aquecimento ficam de fora da
+conta, para a medição não incluir a alocação do buffer. O modo é `read`: várias
+requisições varrem o mesmo buffer sem alterá-lo.
+
+A comparação que interessa: com 1 GiB, 512 e 1024 MiB devem degradar (swap ou
+falha por falta de memória); com 4 GiB a mesma demanda deve continuar estável.
+O par `1vcpu-2gb` e `2vcpu-2gb` mostra se um núcleo a mais muda a vazão quando
+a RAM é a mesma. Confira se a VM tem swap (`swapon --show`). Sem swap, a demanda
+que não cabe mata o processo em vez de só aumentar o tempo de resposta.
+
+Na VM, depois de ajustar CPU e RAM e reiniciar:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+./scripts/start_memory.sh
+```
+
+Em outro terminal, com o virtualenv ativo, um cenário por vez:
+
+```bash
+python3 experiments/run_load.py --scenario 1vcpu-1gb
+```
+
+Repita com `1vcpu-2gb`, `2vcpu-2gb` e `2vcpu-4gb`, sempre depois de desligar a
+VM, mudar o provisionamento e subir de novo. Cada execução regrava
+`experiments/results/memory_<cenário>.csv` com tempo de resposta (mediana e
+p95, medidos no cliente), vazão, CPU do sistema, iowait e memória residente do
+processo. O RSS inclui o interpretador, não só o buffer: compare níveis e
+cenários entre si. A diferença de RSS entre duas demandas deve acompanhar a
+diferença de tamanho do dataset.
+
+Os gráficos saem na máquina em que os CSV estiverem reunidos. O Matplotlib fica
+fora do deploy da VM:
+
+```bash
+pip install -r requirements-experiments.txt
+python3 experiments/plot_results.py
+```
+
+Isso gera `experiments/plots/memory_resumo.png`: tempo de resposta, vazão, CPU
+e memória, uma curva por cenário. A linha tracejada no tempo de resposta é o
+p95. Resultados e figuras estão no `.gitignore`; o documento da atividade é
+quem leva os gráficos. Se os níveis menores parecerem limitados pelo HTTP e não
+pela memória, aumente `--passes` com o mesmo valor em todos os cenários.
+
+Os outros dois serviços usam o mesmo coletor, se a VM ficar com eles em vez do
+de memória:
+
+```bash
+./scripts/start_cpu.sh
+python3 experiments/run_load.py --service cpu --scenario 1vcpu-1gb --demands 2000,5000,10000,20000
+
+./scripts/start_io.sh
+python3 experiments/run_load.py --service io --scenario 1vcpu-1gb --demands 8,32,128
+```
+
+`start_cpu.sh` abre um worker por vCPU, porque o cálculo em Python não usa mais
+do que um núcleo por processo. `start_io.sh` grava em `.data/io` (disco do
+projeto, não `/tmp`) e a carga usa `fsync`.
+
 ## Decisões de design
 
 ### Interfaces independentes
@@ -132,8 +209,9 @@ ou datasets que precisem ser distribuídos.
 
 Os parâmetros são validados pelo FastAPI/Pydantic. Há limites máximos para
 evitar que uma chamada experimental acidental aloque vários gigabytes ou faça
-um cálculo inviável. Esses limites podem ser ajustados por variáveis de
-ambiente, por exemplo `MEMORY_MAX_MB=768`.
+um cálculo inviável. O serviço de memória aceita até 2048 MiB por padrão
+(`MEMORY_MAX_MB`), para que a demanda possa passar da RAM dos cenários menores
+da VM. Acima disso o limite continua ajustável pela mesma variável.
 
 ### CPU service
 
