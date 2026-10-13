@@ -1,0 +1,5 @@
+started_at,service,scenario,vcpus,ram_gb,demand,demand_unit,concurrency,duration_s,warmup,requests_ok,requests_error,rps,latency_min_ms,latency_median_ms,latency_mean_ms,latency_p95_ms,system_cpu_percent_avg,system_iowait_percent_avg,process_cpu_percent_avg,rss_mb_avg,rss_mb_max
+2026-10-13T19:58:05+00:00,memory,2vcpu-2gb,2,2,64,dataset_mb,4,20.057,2,845,0,42.130,44.303,92.154,94.207,120.406,99.095,0.000,193.278,122.261,122.316
+2026-10-13T19:58:27+00:00,memory,2vcpu-2gb,2,2,256,dataset_mb,4,20.291,2,224,0,11.040,264.560,356.525,358.983,385.248,99.069,0.000,195.323,314.367,314.367
+2026-10-13T19:58:50+00:00,memory,2vcpu-2gb,2,2,512,dataset_mb,4,20.722,2,114,0,5.501,651.466,721.319,720.375,751.248,98.911,0.000,194.281,570.520,570.520
+2026-10-13T19:59:13+00:00,memory,2vcpu-2gb,2,2,1024,dataset_mb,4,20.681,2,53,0,2.563,1379.977,1473.108,1536.021,1818.351,99.317,0.000,197.113,1082.520,1082.520
