@@ -1,0 +1,14 @@
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started parent process [1053]
+INFO:     Started server process [1059]
+INFO:     Started server process [1058]
+INFO:     Waiting for application startup.
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Application startup complete.
+INFO:     Received SIGTERM, exiting.
+INFO:     Received SIGHUP, restarting processes.
+INFO:     Received SIGHUP, restarting processes.
+INFO:     Waiting for child process [1058]
+INFO:     Waiting for child process [1059]
+INFO:     Stopping parent process [1053]
